@@ -24,6 +24,7 @@ package jams.server.service;
 import jams.server.entities.User;
 import jams.server.entities.Users;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import jakarta.ejb.Stateless;
@@ -224,22 +225,34 @@ public class UserFacadeREST extends AbstractFacade<User> {
         return Response.ok(Boolean.toString(true)).build();
     }
 
-    /** Removes the (hashed) password from a user before it leaves the server. */
-    private User scrub(User u) {
-        if (u != null) {
-            em.detach(u);
-            u.setPassword(null);
+    /**
+     * Returns a detached copy of the user without the password. A copy is used on
+     * purpose: mutating the managed entity would also null the password in
+     * EclipseLink's shared cache and break subsequent logins.
+     */
+    private static User scrub(User u) {
+        if (u == null) {
+            return null;
         }
-        return u;
+        User copy = new User();
+        copy.setId(u.getId());
+        copy.setLogin(u.getLogin());
+        copy.setName(u.getName());
+        copy.setEmail(u.getEmail());
+        copy.setAdmin(u.getAdmin());
+        // password intentionally left null
+        return copy;
     }
 
-    private Users scrub(Users users) {
-        if (users != null && users.getUsers() != null) {
-            for (User u : users.getUsers()) {
-                scrub(u);
-            }
+    private static Users scrub(Users users) {
+        if (users == null || users.getUsers() == null) {
+            return users;
         }
-        return users;
+        List<User> copies = new ArrayList<>(users.getUsers().size());
+        for (User u : users.getUsers()) {
+            copies.add(scrub(u));
+        }
+        return new Users(copies);
     }
 
     private static String[] decodeBasic(String authorization) {
