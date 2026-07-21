@@ -1,0 +1,50 @@
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB:-jamsserver}
+      MYSQL_USER: ${MYSQL_USER:-jams}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jams}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme-root}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-changeme-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # JPA datasource (WEB-INF/glassfish-resources.xml, ${ENV=...})
+      MYSQL_HOST: db
+      MYSQL_PORT: "3306"
+      MYSQL_DB: ${MYSQL_DB:-jamsserver}
+      MYSQL_USER: ${MYSQL_USER:-jams}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jams}
+      # Flyway migrations (DBInit)
+      DATABASE_URL: "jdbc:mysql://db:3306/${MYSQL_DB:-jamsserver}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&zeroDateTimeBehavior=CONVERT_TO_NULL"
+      DATABASE_USER: ${MYSQL_USER:-jams}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-jams}
+      # Server working directories and model heap
+      UPLOAD_DIRECTORY: /opt/payara/jams/upload/
+      TMP_DIRECTORY: /opt/payara/jams/tmp/
+      EXEC_DIRECTORY: /opt/payara/jams/exec/
+      SERVER_MAX_MEM: ${SERVER_MAX_MEM:-8g}
+    ports:
+      - "8080:8080"   # application (context root /jamscloud)
+      - "4848:4848"   # Payara admin console
+    volumes:
+      - jams-data:/opt/payara/jams
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  jams-data:
