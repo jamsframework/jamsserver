@@ -72,18 +72,19 @@ file in its working directory — see `config/settings.properties.sample`.
 
 ## Security / production hardening
 
-- **Passwords** are stored salted+hashed (PBKDF2, see `PasswordHasher`) and are
-  never returned in API responses. There is **no default account**: the admin is
-  created on first start from `ADMIN_LOGIN` / `ADMIN_PASSWORD`. If `ADMIN_PASSWORD`
-  is empty a random one is generated and logged once — change it after first login.
-- **Login** sends credentials in an `Authorization: Basic` header (POST), not in
-  the URL, so they do not end up in access logs.
-- **Payara admin** (`4848`) is published to `127.0.0.1` only, never to the network.
-- **Secrets** live in `.env` (git-ignored). For real deployments use Docker/host
-  secrets rather than a committed file, and set strong `MYSQL_*` / `ADMIN_PASSWORD`.
-- **TLS**: terminate HTTPS in front of the app (the container speaks plain HTTP).
-  Bind the app to localhost (`127.0.0.1:8080:8080`) and put a reverse proxy before
-  it, e.g. Caddy (automatic HTTPS):
+- **Passwords** are stored salted+hashed (PBKDF2, see `PasswordHasher`). The admin
+  account is created on first start from `ADMIN_LOGIN` / `ADMIN_PASSWORD`. If
+  `ADMIN_PASSWORD` is empty a random one is generated and logged once — change it
+  after first login.
+- **Login** sends credentials in an `Authorization: Basic` header (POST).
+- **Payara admin** (`4848`) is published to `127.0.0.1` only.
+- **Secrets** live in `.env` (git-ignored). For deployment use Docker/host
+  secrets and set strong `MYSQL_*` / `ADMIN_PASSWORD`.
+- **TLS**: terminate HTTPS in front of the app, since the container speaks plain
+  HTTP. The app is published on `0.0.0.0:8080` for direct external access (see
+  *External access* above); for TLS, switch the binding back to
+  `127.0.0.1:8080:8080` and put a reverse proxy before it, e.g. Caddy (automatic
+  HTTPS):
 
   ```
   cloud.example.org {
