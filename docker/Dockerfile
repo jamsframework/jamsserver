@@ -14,6 +14,11 @@ ADD --chown=payara:payara \
     https://repo.maven.apache.org/maven2/com/mysql/mysql-connector-j/${MYSQL_CONNECTOR_VERSION}/mysql-connector-j-${MYSQL_CONNECTOR_VERSION}.jar \
     ${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}/lib/mysql-connector-j.jar
 
+# Create the JTA datasource (jdbc/jamsserver) at domain scope before the app
+# deploys. Host/credentials stay as ${ENV=...} and are resolved by Payara at
+# runtime from the container environment.
+COPY --chown=payara:payara docker/pre-boot-commands.asadmin ${CONFIG_DIR}/pre-boot-commands.asadmin
+
 # Working directories for uploads / tmp / model execution. Created here and
 # owned by the payara user; the named volume in docker-compose inherits this
 # ownership on first initialization.

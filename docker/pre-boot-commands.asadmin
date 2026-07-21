@@ -1,0 +1,2 @@
+create-jdbc-connection-pool --datasourceclassname com.mysql.cj.jdbc.MysqlDataSource --restype javax.sql.DataSource --isconnectvalidatereq true --validationmethod auto-commit --property serverName=${ENV=MYSQL_HOST}:portNumber=${ENV=MYSQL_PORT}:databaseName=${ENV=MYSQL_DB}:user=${ENV=MYSQL_USER}:password=${ENV=MYSQL_PASSWORD}:useSSL=false:allowPublicKeyRetrieval=true:serverTimezone=UTC:zeroDateTimeBehavior=CONVERT_TO_NULL mysql_jamsserver_rootPool
+create-jdbc-resource --connectionpoolid mysql_jamsserver_rootPool jdbc/jamsserver
