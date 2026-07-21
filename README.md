@@ -42,6 +42,22 @@ Configuration is entirely environment-driven (see `docker-compose.yml`); MySQL
 host/credentials, the Flyway migration URL and the upload/tmp/exec directories
 all come from environment variables. Flyway creates the schema on first start.
 
+### External access
+
+Port 8080 is published on `0.0.0.0`, so the server is reachable from other hosts
+as `http://<host-ip>:8080/jamscloud/webresources` (the desktop client connects to
+this base URL). The Payara admin console (4848) is bound to localhost only.
+
+- **On a Linux server** this works out of the box; just open port 8080 in the
+  firewall.
+- **On macOS via Colima** the published port is forwarded to the host on all
+  interfaces, so `http://<mac-lan-ip>:8080/jamscloud/…` works from other machines.
+  Colima must be running (`colima start`); it does not survive a reboot unless you
+  enable it as a service (`brew services start colima`).
+- **No TLS yet:** login uses HTTP Basic auth, so credentials travel in cleartext.
+  Only expose this on a trusted network until an HTTPS reverse proxy is in front
+  (see *Security / production hardening* below).
+
 ## Configuration reference
 
 | Environment variable | Purpose |

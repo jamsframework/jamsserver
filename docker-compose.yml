@@ -42,8 +42,12 @@ services:
       EXEC_DIRECTORY: /opt/payara/jams/exec/
       SERVER_MAX_MEM: ${SERVER_MAX_MEM:-8g}
     ports:
-      - "8080:8080"            # application (context root /jamscloud)
-      - "127.0.0.1:4848:4848"  # Payara admin: localhost only, not exposed to the network
+      # Application exposed on ALL interfaces so it is reachable from other hosts
+      # (context root /jamscloud). No TLS yet — put an HTTPS reverse proxy in front
+      # before using this over untrusted networks (login uses HTTP Basic auth).
+      - "0.0.0.0:8080:8080"
+      # Payara admin console: bound to localhost only, never exposed to the network.
+      - "127.0.0.1:4848:4848"
     volumes:
       - jams-data:/opt/payara/jams
     restart: unless-stopped
