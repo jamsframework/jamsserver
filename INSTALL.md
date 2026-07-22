@@ -61,7 +61,7 @@ server itself.
 ```bash
 mkdir -p ~/jams && cd ~/jams
 git clone https://github.com/jamsframework/jams.git
-git clone https://github.com/jamsframework/jams-cloud-server.git
+git clone https://github.com/jamsframework/jamsserver.git
 ```
 
 ---
@@ -82,7 +82,7 @@ cd ~/jams/jams
 ## 4. Build the server application
 
 ```bash
-cd ~/jams/jams-cloud-server
+cd ~/jams/jamsserver
 ./mvnw clean package -DskipTests
 # result: target/jams-cloud-server.war
 ```
@@ -186,7 +186,7 @@ the containers back automatically after a reboot.
 
 ```bash
 cd ~/jams/jams        && git pull && ./mvnw install -DskipTests
-cd ~/jams/jams-cloud-server && git pull && ./mvnw clean package -DskipTests
+cd ~/jams/jamsserver && git pull && ./mvnw clean package -DskipTests
 docker compose up -d --build
 ```
 
