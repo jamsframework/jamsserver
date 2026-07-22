@@ -27,6 +27,9 @@ Produces `target/jams-cloud-server.war`.
 
 ## Run with Docker (recommended)
 
+For a full install on a fresh server (prerequisites, building, launching,
+day-to-day operations), see **[INSTALL.md](INSTALL.md)**. Quick version:
+
 Brings up Payara 6 + MySQL 8:
 
 ```
