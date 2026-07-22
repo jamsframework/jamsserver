@@ -3,3 +3,4 @@ target/
 ._*
 .DS_Store
 *.bak
+.idea/
