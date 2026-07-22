@@ -34,6 +34,11 @@ sudo apt update
 sudo apt install -y git openjdk-17-jdk curl ca-certificates
 #   RHEL/Rocky:  sudo dnf install -y git java-17-openjdk-devel curl ca-certificates
 
+# Maven needs JAVA_HOME, which Debian does not set automatically. Point it at the
+# JDK and persist it for future logins:
+export JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+echo "export JAVA_HOME=$JAVA_HOME" >> ~/.bashrc
+
 # Docker Engine + Compose plugin (official convenience script; installs Docker CE
 # so you get the "docker compose" v2 plugin — do not use Debian's docker.io)
 curl -fsSL https://get.docker.com | sudo sh
