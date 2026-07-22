@@ -54,9 +54,35 @@ this base URL). The Payara admin console (4848) is bound to localhost only.
   interfaces, so `http://<mac-lan-ip>:8080/jamscloud/…` works from other machines.
   Colima must be running (`colima start`); it does not survive a reboot unless you
   enable it as a service (`brew services start colima`).
-- **No TLS yet:** login uses HTTP Basic auth, so credentials travel in cleartext.
-  Only expose this on a trusted network until an HTTPS reverse proxy is in front
-  (see *Security / production hardening* below).
+- **No TLS by default:** login uses HTTP Basic auth, so credentials travel in
+  cleartext. Only expose the plain-HTTP setup on a trusted network. TLS is
+  available as an optional add-on (see below).
+
+### Optional: HTTPS with Caddy
+
+TLS is **opt-in** and does not affect the default HTTP deployment. A separate
+compose file adds a [Caddy](https://caddyserver.com/) reverse proxy that
+terminates HTTPS and proxies to the server internally; the app port (8080) is no
+longer published — only Caddy is exposed (80/443). Use it *instead* of the
+default file:
+
+```
+cp .env.example .env          # set SERVER_NAME / CADDY_TLS (and the passwords)
+docker compose -f docker-compose.tls.yml up -d --build
+```
+
+Two modes, selected via `.env` (see `docker/Caddyfile`):
+
+- **Self-signed** (`CADDY_TLS=tls internal`) — Caddy issues a certificate from
+  its own internal CA. Needs no extra open ports, but clients must trust that CA:
+  the browser will warn, and the **Java desktop client rejects it** unless the CA
+  is imported into a Java truststore (or bundled with the client). Fine for a
+  controlled set of users; the CA lives in the `caddy-data` volume.
+- **Let's Encrypt** (`CADDY_TLS=` empty, `SERVER_NAME=<public-host>`) — a real,
+  publicly-trusted certificate, issued and renewed automatically. This needs the
+  host reachable from the internet on **ports 80/443** (that is what the ACME
+  challenge uses — not the application port). No certificate paperwork; if 80/443
+  cannot be opened, use the self-signed mode instead.
 
 ## Configuration reference
 

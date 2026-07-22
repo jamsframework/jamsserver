@@ -1,0 +1,81 @@
+# Optional TLS deployment: Caddy terminates HTTPS and reverse-proxies to the
+# server over the internal Docker network. The application port (8080) is NOT
+# published to the host here — only Caddy is reachable from outside.
+#
+# Use this file INSTEAD of docker-compose.yml:
+#   docker compose -f docker-compose.tls.yml up -d --build
+#
+# Pick the TLS mode via .env (see .env.example):
+#   - self-signed (default): SERVER_NAME/CADDY_TLS unset -> Caddy internal CA.
+#     Clients must trust that CA (import it, or bundle it with the JAMS client).
+#   - Let's Encrypt: set SERVER_NAME=<public-host>, CADDY_TLS="" and make sure
+#     ports 80/443 are reachable from the internet.
+#
+# The plain-HTTP setup in docker-compose.yml is unchanged and stays the default.
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB:-jamsserver}
+      MYSQL_USER: ${MYSQL_USER:-jams}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jams}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme-root}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-changeme-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: "3306"
+      MYSQL_DB: ${MYSQL_DB:-jamsserver}
+      MYSQL_USER: ${MYSQL_USER:-jams}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jams}
+      DATABASE_URL: "jdbc:mysql://db:3306/${MYSQL_DB:-jamsserver}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&zeroDateTimeBehavior=CONVERT_TO_NULL"
+      DATABASE_USER: ${MYSQL_USER:-jams}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-jams}
+      ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      UPLOAD_DIRECTORY: /opt/payara/jams/upload/
+      TMP_DIRECTORY: /opt/payara/jams/tmp/
+      EXEC_DIRECTORY: /opt/payara/jams/exec/
+      SERVER_MAX_MEM: ${SERVER_MAX_MEM:-8g}
+    # Only reachable through Caddy on the internal network — no host port here.
+    expose:
+      - "8080"
+    volumes:
+      - jams-data:/opt/payara/jams
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - server
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-localhost}
+      CADDY_TLS: ${CADDY_TLS:-tls internal}
+    ports:
+      - "0.0.0.0:80:80"    # needed for Let's Encrypt HTTP-01 and HTTP->HTTPS redirect
+      - "0.0.0.0:443:443"  # HTTPS (application, context root /jamscloud)
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data      # persists issued certs / the internal CA
+      - caddy-config:/config
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  jams-data:
+  caddy-data:
+  caddy-config:

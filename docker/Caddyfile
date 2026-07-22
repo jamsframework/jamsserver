@@ -1,0 +1,21 @@
+# Reverse proxy with TLS termination for the JAMS Cloud server.
+#
+# Driven by two environment variables (see docker-compose.tls.yml / .env):
+#
+#   SERVER_NAME  the site address Caddy serves, e.g. "xyz.uni-jena.de".
+#                Defaults to "localhost" for local testing.
+#   CADDY_TLS    the TLS directive. Defaults to "tls internal" (Caddy's own
+#                internal CA — self-signed, no ports needed). For a real,
+#                publicly-trusted certificate via Let's Encrypt, set this to an
+#                empty string AND make sure the host is reachable on ports 80/443
+#                from the internet (that is what ACME needs, not the app port).
+#
+# Examples:
+#   Local / self-signed:  SERVER_NAME=localhost           CADDY_TLS="tls internal"
+#   Internal CA, real host: SERVER_NAME=xyz.uni-jena.de   CADDY_TLS="tls internal"
+#   Let's Encrypt:        SERVER_NAME=xyz.uni-jena.de     CADDY_TLS=""
+
+{$SERVER_NAME:localhost} {
+	{$CADDY_TLS:tls internal}
+	reverse_proxy server:8080
+}
